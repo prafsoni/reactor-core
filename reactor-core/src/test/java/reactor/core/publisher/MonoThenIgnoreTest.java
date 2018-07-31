@@ -76,9 +76,8 @@ public class MonoThenIgnoreTest {
 	public void cancel() {
 		TestPublisher<String> cancelTester = TestPublisher.create();
 
-		MonoProcessor<Void> processor = cancelTester.flux()
-		                                            .then()
-		                                            .toProcessor();
+		MonoProcessor<Void> processor = MonoProcessor.of(cancelTester.flux()
+		                                                             .then());
 		processor.subscribe();
 		processor.cancel();
 

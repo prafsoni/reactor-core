@@ -15,6 +15,7 @@
  */
 package reactor.core.publisher;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -23,6 +24,8 @@ import org.reactivestreams.Subscription;
 import reactor.test.StepVerifier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.fail;
 
 public class MonoPeekTest {
 
@@ -134,14 +137,16 @@ public class MonoPeekTest {
 	}
 
 	@Test
-	public void onMonoRejectedDoOnErrorClazzNot() {
+	public void onMonoRejectedDoOnErrorClazzNot() throws InterruptedException {
 		Mono<String> mp = Mono.error(new TestException());
 		AtomicReference<Throwable> ref = new AtomicReference<>();
+		CountDownLatch latch = new CountDownLatch(1);
 
-		MonoProcessor<String> processor = mp.doOnError(RuntimeException.class, ref::set)
-		                                    .toProcessor();
-		processor.subscribe();
-		assertThat(processor.getError()).isInstanceOf(TestException.class);
+		mp.doOnError(RuntimeException.class, ref::set)
+		  .doFinally(sig -> latch.countDown())
+		  .subscribe(v -> {}, e -> assertThat(e).isInstanceOf(TestException.class), () -> fail("expected error"));
+
+		latch.await();
 
 		assertThat(ref.get()).isNull();
 	}

@@ -255,9 +255,10 @@ public class FluxSpecTests {
 		Flux<Integer> s = Flux.fromIterable(Arrays.asList(1, 1, 2, 2, 3));
 
 //		when:"the values are filtered and result is collected"
-		MonoProcessor<List<Integer>> tap = s.distinctUntilChanged()
-		                                    .collectList()
-		                                    .toProcessor();
+		MonoProcessor<List<Integer>> tap = MonoProcessor.of(
+				s.distinctUntilChanged()
+				 .collectList()
+		);
 		tap.subscribe();
 
 //		then:"collected must remove duplicates"
@@ -271,9 +272,10 @@ public class FluxSpecTests {
 		Flux<Integer> s = Flux.fromIterable(Arrays.asList(2, 4, 3, 5, 2, 5));
 
 //		when:"the values are filtered and result is collected"
-		MonoProcessor<List<Integer>> tap = s.distinctUntilChanged(it -> it % 2 == 0)
-		                                    .collectList()
-		                                    .toProcessor();
+		MonoProcessor<List<Integer>> tap = MonoProcessor.of(
+				s.distinctUntilChanged(it -> it % 2 == 0)
+				 .collectList()
+		);
 
 //		then:"collected must remove duplicates"
 		assertThat(tap.block()).containsExactly(2, 3, 2, 5);
@@ -286,9 +288,10 @@ public class FluxSpecTests {
 		Flux<Integer> s = Flux.fromIterable(Arrays.asList(1, 2, 3, 1, 2, 3, 4));
 
 //		when:"the values are filtered and result is collected"
-		MonoProcessor<List<Integer>> tap = s.distinct()
-		                                    .collectList()
-		                                    .toProcessor();
+		MonoProcessor<List<Integer>> tap = MonoProcessor.of(
+				s.distinct()
+				 .collectList()
+		);
 		tap.subscribe();
 
 //		then:"collected should be without duplicates"
@@ -302,9 +305,10 @@ public class FluxSpecTests {
 		Flux<Integer> s = Flux.fromIterable(Arrays.asList(1, 2, 3, 1, 2, 3, 4));
 
 //		when: "the values are filtered and result is collected"
-		MonoProcessor<List<Integer>> tap = s.distinct(it -> it % 3)
-		                                    .collectList()
-		                                    .toProcessor();
+		MonoProcessor<List<Integer>> tap = MonoProcessor.of(
+				s.distinct(it -> it % 3)
+				 .collectList()
+		);
 		tap.subscribe();
 
 //		then: "collected should be without duplicates"
@@ -487,8 +491,7 @@ public class FluxSpecTests {
 				.doOnError(Throwable::printStackTrace);
 
 //			when: "the source accepts a value"
-		MonoProcessor<Integer> value = mapped.next()
-		                                     .toProcessor();
+		MonoProcessor<Integer> value = MonoProcessor.of(mapped.next());
 		value.subscribe();
 		source.sink().next(1);
 
@@ -989,7 +992,7 @@ public class FluxSpecTests {
 		FluxProcessor<Integer, Integer> source =
 				EmitterProcessor.create();
 		Mono<List<Integer>> reduced = source.collectList();
-		MonoProcessor<List<Integer>> value = reduced.toProcessor();
+		MonoProcessor<List<Integer>> value = MonoProcessor.of(reduced);
 		value.subscribe();
 
 //		when: "the first value is accepted"

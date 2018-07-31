@@ -78,6 +78,29 @@ public final class MonoProcessor<O> extends Mono<O>
 		return new MonoProcessor<>(null, waitStrategy);
 	}
 
+	/**
+	 * Wrap a {@link Mono} into a {@link MonoProcessor} (turning it hot and allowing to block,
+	 * cancel, as well as many other operations). Note that the {@link MonoProcessor}
+	 * is connected to the source.
+	 *
+	 * <p>
+	 * <img width="500" src="https://raw.githubusercontent.com/reactor/reactor-core/v3.1.3.RELEASE/src/docs/marble/unbounded1.png" alt="">
+	 * <p>
+	 *
+	 * @return a {@link MonoProcessor} to use to either retrieve value or cancel the underlying {@link Subscription}
+	 */
+	public static <T> MonoProcessor<T> of(Mono<T> source) {
+		MonoProcessor<T> result;
+		if (source instanceof MonoProcessor) {
+			result = (MonoProcessor<T>) source;
+		}
+		else {
+			result = new MonoProcessor<>(source);
+		}
+		result.connect();
+		return result;
+	}
+
 	final WaitStrategy       waitStrategy;
 
 

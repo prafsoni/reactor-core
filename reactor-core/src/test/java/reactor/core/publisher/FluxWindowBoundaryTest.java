@@ -228,11 +228,10 @@ public class FluxWindowBoundaryTest {
 		//non overlapping buffers
 		EmitterProcessor<Integer> boundaryFlux = EmitterProcessor.create();
 
-		MonoProcessor<List<List<Integer>>> res = numbers.window(boundaryFlux)
+		Mono<List<List<Integer>>> res = numbers.window(boundaryFlux)
 		                                       .concatMap(Flux::buffer)
 		                                       .buffer()
-		                                       .publishNext()
-		                                       .toProcessor();
+		                                       .publishNext();
 		res.subscribe();
 
 		numbers.onNext(1);

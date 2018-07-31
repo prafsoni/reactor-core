@@ -300,8 +300,7 @@ public class MonoProcessorTest {
 
 		mp.onNext(1);
 
-		MonoProcessor<Integer> mp2 = mp.map(s -> s * 2)
-		                               .toProcessor();
+		MonoProcessor<Integer> mp2 = MonoProcessor.of(mp.map(s -> s * 2));
 		mp2.subscribe();
 
 		assertThat(mp2.isTerminated()).isTrue();
@@ -315,8 +314,7 @@ public class MonoProcessorTest {
 
 		mp.onNext(1);
 
-		MonoProcessor<Integer> mp2 = mp.flatMap(s -> Mono.just(s * 2))
-		                               .toProcessor();
+		MonoProcessor<Integer> mp2 = MonoProcessor.of(mp.flatMap(s -> Mono.just(s * 2)));
 		mp2.subscribe();
 
 		assertThat(mp2.isTerminated()).isTrue();
@@ -500,9 +498,8 @@ public class MonoProcessorTest {
 	@Test
 	public void monoNotCancelledByMonoProcessor() {
 		AtomicLong cancelCounter = new AtomicLong();
-		MonoProcessor<String> monoProcessor = Mono.just("foo")
-		                                          .doOnCancel(cancelCounter::incrementAndGet)
-		                                          .toProcessor();
+		MonoProcessor<String> monoProcessor = MonoProcessor.of(Mono.just("foo")
+		                                                           .doOnCancel(cancelCounter::incrementAndGet));
 		monoProcessor.subscribe();
 
 		assertThat(cancelCounter.get()).isEqualTo(0);
@@ -561,6 +558,7 @@ public class MonoProcessorTest {
 	}
 
 	@Test
+	@Deprecated
 	public void monoToProcessorReusesInstance() {
 		MonoProcessor<String> monoProcessor = Mono.just("foo")
 		                                          .toProcessor();
@@ -571,6 +569,7 @@ public class MonoProcessorTest {
 	}
 
 	@Test
+	@Deprecated
 	public void monoToProcessorConnects() {
 		TestPublisher<String> tp = TestPublisher.create();
 		MonoProcessor<String> connectedProcessor = tp.mono().toProcessor();
@@ -579,6 +578,7 @@ public class MonoProcessorTest {
 	}
 
 	@Test
+	@Deprecated
 	public void monoToProcessorChain() {
 		StepVerifier.withVirtualTime(() -> Mono.just("foo")
 		                                       .toProcessor()
@@ -590,6 +590,7 @@ public class MonoProcessorTest {
 	}
 
 	@Test
+	@Deprecated
 	public void monoToProcessorChainColdToHot() {
 		AtomicInteger subscriptionCount = new AtomicInteger();
 		Mono<String> coldToHot = Mono.just("foo")
@@ -608,13 +609,58 @@ public class MonoProcessorTest {
 	}
 
 	@Test
+	public void monoProcessorOfReusesInstance() {
+		MonoProcessor<String> monoProcessor = MonoProcessor.of(Mono.just("foo"));
+
+		assertThat(monoProcessor)
+				.isSameAs(MonoProcessor.of(monoProcessor))
+				.isSameAs(monoProcessor.subscribe());
+	}
+
+	@Test
+	public void monoProcessorOfConnects() {
+		TestPublisher<String> tp = TestPublisher.create();
+		MonoProcessor<String> connectedProcessor = MonoProcessor.of(tp.mono());
+
+		assertThat(connectedProcessor.subscription).isNotNull();
+	}
+
+	@Test
+	public void monoProcessorOfChain() {
+		StepVerifier.withVirtualTime(() -> MonoProcessor.of(Mono.just("foo"))
+		                                                .delayElement(Duration.ofMillis(500)))
+		            .expectSubscription()
+		            .expectNoEvent(Duration.ofMillis(500))
+		            .expectNext("foo")
+		            .verifyComplete();
+	}
+
+	@Test
+	public void monoProcessorOfChainColdToHot() {
+		AtomicInteger subscriptionCount = new AtomicInteger();
+		Mono<String> coldToHot = MonoProcessor
+				.of( //this actually subscribes
+						Mono.just("foo")
+						    .doOnSubscribe(sub -> subscriptionCount.incrementAndGet())
+						    .cache())
+				.filter(s -> s.length() < 4);
+
+		assertThat(subscriptionCount.get()).isEqualTo(1);
+
+		coldToHot.block();
+		coldToHot.block();
+		coldToHot.block();
+
+		assertThat(subscriptionCount.get()).isEqualTo(1);
+	}
+
+	@Test
 	public void monoProcessorBlockIsUnbounded() {
 		long start = System.nanoTime();
 
-		String result = Mono.just("foo")
-		                    .delayElement(Duration.ofMillis(500))
-		                    .toProcessor()
-		                    .block();
+		String result = MonoProcessor.of(Mono.just("foo")
+		                                     .delayElement(Duration.ofMillis(500)))
+		                             .block();
 
 		assertThat(result).isEqualTo("foo");
 		assertThat(Duration.ofNanos(System.nanoTime() - start))
@@ -626,10 +672,9 @@ public class MonoProcessorTest {
 		long start = System.nanoTime();
 
 		assertThatExceptionOfType(IllegalStateException.class)
-				.isThrownBy(() -> Mono.just("foo")
-				                      .delayElement(Duration.ofMillis(500))
-				                      .toProcessor()
-				                      .block(Duration.ofSeconds(-1)))
+				.isThrownBy(() -> MonoProcessor.of(Mono.just("foo")
+				                                       .delayElement(Duration.ofMillis(500)))
+				                               .block(Duration.ofSeconds(-1)))
 				.withMessage("Timeout on Mono blocking read");
 
 		assertThat(Duration.ofNanos(System.nanoTime() - start))
@@ -641,11 +686,10 @@ public class MonoProcessorTest {
 		long start = System.nanoTime();
 
 		assertThatExceptionOfType(IllegalStateException.class)
-				.isThrownBy(() -> Mono.just("foo")
-				                      .delayElement(Duration.ofMillis(500))
-				                      .toProcessor()
-				                      .block(Duration.ZERO))
-		        .withMessage("Timeout on Mono blocking read");
+				.isThrownBy(() -> MonoProcessor.of(Mono.just("foo")
+				                                       .delayElement(Duration.ofMillis(500)))
+				                               .block(Duration.ZERO))
+				.withMessage("Timeout on Mono blocking read");
 
 		assertThat(Duration.ofNanos(System.nanoTime() - start))
 				.isLessThan(Duration.ofMillis(500));

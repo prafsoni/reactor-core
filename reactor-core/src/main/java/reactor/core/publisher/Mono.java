@@ -4003,7 +4003,9 @@ public abstract class Mono<T> implements Publisher<T> {
 	 * <p>
 	 *
 	 * @return a {@link MonoProcessor} to use to either retrieve value or cancel the underlying {@link Subscription}
+	 * @deprecated will be removed in 3.2.0.RELEASE
 	 */
+	@Deprecated
 	public final MonoProcessor<T> toProcessor() {
 		MonoProcessor<T> result;
 		if (this instanceof MonoProcessor) {
