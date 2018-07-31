@@ -37,7 +37,7 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoProcessor;
+import reactor.core.publisher.MonoNextProcessor;
 import reactor.core.publisher.ReplayProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -255,7 +255,7 @@ public class FluxSpecTests {
 		Flux<Integer> s = Flux.fromIterable(Arrays.asList(1, 1, 2, 2, 3));
 
 //		when:"the values are filtered and result is collected"
-		MonoProcessor<List<Integer>> tap = MonoProcessor.of(
+		MonoNextProcessor<List<Integer>> tap = MonoNextProcessor.of(
 				s.distinctUntilChanged()
 				 .collectList()
 		);
@@ -272,7 +272,7 @@ public class FluxSpecTests {
 		Flux<Integer> s = Flux.fromIterable(Arrays.asList(2, 4, 3, 5, 2, 5));
 
 //		when:"the values are filtered and result is collected"
-		MonoProcessor<List<Integer>> tap = MonoProcessor.of(
+		MonoNextProcessor<List<Integer>> tap = MonoNextProcessor.of(
 				s.distinctUntilChanged(it -> it % 2 == 0)
 				 .collectList()
 		);
@@ -288,7 +288,7 @@ public class FluxSpecTests {
 		Flux<Integer> s = Flux.fromIterable(Arrays.asList(1, 2, 3, 1, 2, 3, 4));
 
 //		when:"the values are filtered and result is collected"
-		MonoProcessor<List<Integer>> tap = MonoProcessor.of(
+		MonoNextProcessor<List<Integer>> tap = MonoNextProcessor.of(
 				s.distinct()
 				 .collectList()
 		);
@@ -305,7 +305,7 @@ public class FluxSpecTests {
 		Flux<Integer> s = Flux.fromIterable(Arrays.asList(1, 2, 3, 1, 2, 3, 4));
 
 //		when: "the values are filtered and result is collected"
-		MonoProcessor<List<Integer>> tap = MonoProcessor.of(
+		MonoNextProcessor<List<Integer>> tap = MonoNextProcessor.of(
 				s.distinct(it -> it % 3)
 				 .collectList()
 		);
@@ -491,7 +491,7 @@ public class FluxSpecTests {
 				.doOnError(Throwable::printStackTrace);
 
 //			when: "the source accepts a value"
-		MonoProcessor<Integer> value = MonoProcessor.of(mapped.next());
+		MonoNextProcessor<Integer> value = MonoNextProcessor.of(mapped.next());
 		value.subscribe();
 		source.sink().next(1);
 
@@ -678,8 +678,8 @@ public class FluxSpecTests {
 //		"Stream can be counted"
 //		given: "source composables to count and tap"
 		EmitterProcessor<Integer> source = EmitterProcessor.create();
-		MonoProcessor<Long> tap = source.count()
-		                                .subscribeWith(MonoProcessor.create());
+		MonoNextProcessor<Long> tap = source.count()
+		                                    .subscribeWith(MonoNextProcessor.create());
 
 //		when: "the sources accept a value"
 		source.onNext(1);
@@ -917,7 +917,7 @@ public class FluxSpecTests {
 //		given: "a composable that will accept 5 values and a reduce function"
 		EmitterProcessor<Integer> source = EmitterProcessor.create();
 		Mono<Integer> reduced = source.reduce(new Reduction());
-		MonoProcessor<Integer> value = reduced.subscribeWith(MonoProcessor.create());
+		MonoNextProcessor<Integer> value = reduced.subscribeWith(MonoNextProcessor.create());
 
 //		when: "the expected number of values is accepted"
 		source.onNext(1);
@@ -936,8 +936,8 @@ public class FluxSpecTests {
 //		"When a known number of values is being reduced, only the final value is made available"
 //		given: "a composable that will accept 2 values and a reduce function"
 		EmitterProcessor<Integer> source = EmitterProcessor.create();
-		MonoProcessor<Integer> value = source.reduce(new Reduction())
-		                                     .subscribeWith(MonoProcessor.create());
+		MonoNextProcessor<Integer> value = source.reduce(new Reduction())
+		                                         .subscribeWith(MonoNextProcessor.create());
 
 //		when: "the first value is accepted"
 		source.onNext(1);
@@ -992,7 +992,7 @@ public class FluxSpecTests {
 		FluxProcessor<Integer, Integer> source =
 				EmitterProcessor.create();
 		Mono<List<Integer>> reduced = source.collectList();
-		MonoProcessor<List<Integer>> value = MonoProcessor.of(reduced);
+		MonoNextProcessor<List<Integer>> value = MonoNextProcessor.of(reduced);
 		value.subscribe();
 
 //		when: "the first value is accepted"
@@ -1013,7 +1013,7 @@ public class FluxSpecTests {
 		                              .log()
 		                              .flatMap(it -> it.log("lol")
 		                                               .reduce(new Reduction()));
-		MonoProcessor<Integer> value = reduced.subscribeWith(MonoProcessor.create());
+		MonoNextProcessor<Integer> value = reduced.subscribeWith(MonoNextProcessor.create());
 
 //		when: "the first value is accepted"
 		source.onNext(1);

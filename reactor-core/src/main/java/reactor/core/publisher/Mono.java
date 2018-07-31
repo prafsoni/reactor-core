@@ -1562,7 +1562,7 @@ public abstract class Mono<T> implements Publisher<T> {
 	 * @return a replaying {@link Mono}
 	 */
 	public final Mono<T> cache() {
-		return onAssembly(new MonoProcessor<>(this));
+		return onAssembly(new MonoNextProcessor<>(this));
 	}
 
 	/**
@@ -3431,8 +3431,8 @@ public abstract class Mono<T> implements Publisher<T> {
 	 * @return a new {@link Disposable} that can be used to cancel the underlying {@link Subscription}
 	 */
 	public final Disposable subscribe() {
-		if(this instanceof MonoProcessor){
-			MonoProcessor<T> s = (MonoProcessor<T>)this;
+		if(this instanceof MonoNextProcessor){
+			MonoNextProcessor<T> s = (MonoNextProcessor<T>)this;
 			s.connect();
 			return s;
 		}
@@ -3650,7 +3650,7 @@ public abstract class Mono<T> implements Publisher<T> {
 
 	/**
 	 * Subscribe the given {@link Subscriber} to this {@link Mono} and return said
-	 * {@link Subscriber} (eg. a {@link MonoProcessor}).
+	 * {@link Subscriber} (eg. a {@link MonoNextProcessor}).
 	 *
 	 * @param subscriber the {@link Subscriber} to subscribe with
 	 * @param <E> the reified type of the {@link Subscriber} for chaining
@@ -3994,25 +3994,25 @@ public abstract class Mono<T> implements Publisher<T> {
 	}
 
 	/**
-	 * Wrap this {@link Mono} into a {@link MonoProcessor} (turning it hot and allowing to block,
-	 * cancel, as well as many other operations). Note that the {@link MonoProcessor}
+	 * Wrap this {@link Mono} into a {@link MonoNextProcessor} (turning it hot and allowing to block,
+	 * cancel, as well as many other operations). Note that the {@link MonoNextProcessor}
 	 * is subscribed to its parent source if any.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/reactor-core/v3.1.3.RELEASE/src/docs/marble/unbounded1.png" alt="">
 	 * <p>
 	 *
-	 * @return a {@link MonoProcessor} to use to either retrieve value or cancel the underlying {@link Subscription}
+	 * @return a {@link MonoNextProcessor} to use to either retrieve value or cancel the underlying {@link Subscription}
 	 * @deprecated will be removed in 3.2.0.RELEASE
 	 */
 	@Deprecated
-	public final MonoProcessor<T> toProcessor() {
-		MonoProcessor<T> result;
-		if (this instanceof MonoProcessor) {
-			result = (MonoProcessor<T>)this;
+	public final MonoNextProcessor<T> toProcessor() {
+		MonoNextProcessor<T> result;
+		if (this instanceof MonoNextProcessor) {
+			result = (MonoNextProcessor<T>)this;
 		}
 		else {
-			result = new MonoProcessor<>(this);
+			result = new MonoNextProcessor<>(this);
 		}
 		result.connect();
 		return result;

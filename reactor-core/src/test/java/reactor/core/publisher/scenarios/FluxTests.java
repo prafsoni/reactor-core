@@ -46,7 +46,6 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
 import org.hamcrest.Matcher;
@@ -63,10 +62,9 @@ import reactor.core.publisher.EmitterProcessor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxProcessor;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.MonoProcessor;
+import reactor.core.publisher.MonoNextProcessor;
 import reactor.core.publisher.ReplayProcessor;
 import reactor.core.publisher.Signal;
-import reactor.core.publisher.SignalType;
 import reactor.core.publisher.TopicProcessor;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -405,7 +403,7 @@ public class FluxTests extends AbstractReactorTest {
 
 	@Test
 	public void promiseAcceptCountCannotExceedOne() {
-		MonoProcessor<Object> deferred = MonoProcessor.create();
+		MonoNextProcessor<Object> deferred = MonoNextProcessor.create();
 		deferred.onNext("alpha");
 		try {
 			deferred.onNext("bravo");
@@ -420,7 +418,7 @@ public class FluxTests extends AbstractReactorTest {
 
 	@Test
 	public void promiseErrorCountCannotExceedOne() {
-		MonoProcessor<Object> deferred = MonoProcessor.create();
+		MonoNextProcessor<Object> deferred = MonoNextProcessor.create();
 		Throwable error = new IOException("foo");
 
 		StepVerifier.create(deferred)
@@ -437,7 +435,7 @@ public class FluxTests extends AbstractReactorTest {
 
 	@Test
 	public void promiseAcceptCountAndErrorCountCannotExceedOneInTotal() {
-		MonoProcessor<Object> deferred = MonoProcessor.create();
+		MonoNextProcessor<Object> deferred = MonoNextProcessor.create();
 		Throwable error = new IOException("foo");
 
 		StepVerifier.create(deferred)
@@ -1484,7 +1482,7 @@ public class FluxTests extends AbstractReactorTest {
 
 		final Semaphore doneSemaphore = new Semaphore(0);
 
-		final MonoProcessor<List<String>> listPromise = MonoProcessor.of(
+		final MonoNextProcessor<List<String>> listPromise = MonoNextProcessor.of(
 				joinStream.flatMap(Flux::fromIterable)
 				          .log("resultStream")
 				          .collectList()

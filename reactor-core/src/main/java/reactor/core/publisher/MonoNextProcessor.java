@@ -42,60 +42,60 @@ import reactor.util.context.Context;
  * <img width="640" src="https://raw.githubusercontent.com/reactor/reactor-core/v3.1.3.RELEASE/src/docs/marble/monoprocessor.png" alt="">
  * <p>
  *
- * Once a {@link MonoProcessor} has been resolved, newer subscribers will benefit from the cached result.
+ * Once a {@link MonoNextProcessor} has been resolved, newer subscribers will benefit from the cached result.
  *
  * @param <O> the type of the value that will be made available
  *
  * @author Stephane Maldini
  */
-public final class MonoProcessor<O> extends Mono<O>
+public final class MonoNextProcessor<O> extends Mono<O>
 		implements Processor<O, O>, CoreSubscriber<O>, Disposable, Subscription,
 		           Scannable,
 		           LongSupplier {
 
 	/**
-	 * Create a {@link MonoProcessor} that will eagerly request 1 on {@link #onSubscribe(Subscription)}, cache and emit
+	 * Create a {@link MonoNextProcessor} that will eagerly request 1 on {@link #onSubscribe(Subscription)}, cache and emit
 	 * the eventual result for 1 or N subscribers.
 	 *
 	 * @param <T> type of the expected value
 	 *
-	 * @return A {@link MonoProcessor}.
+	 * @return A {@link MonoNextProcessor}.
 	 */
-	public static <T> MonoProcessor<T> create() {
-		return new MonoProcessor<>(null);
+	public static <T> MonoNextProcessor<T> create() {
+		return new MonoNextProcessor<>(null);
 	}
 
 	/**
-	 * Create a {@link MonoProcessor} that will eagerly request 1 on {@link #onSubscribe(Subscription)}, cache and emit
+	 * Create a {@link MonoNextProcessor} that will eagerly request 1 on {@link #onSubscribe(Subscription)}, cache and emit
 	 * the eventual result for 1 or N subscribers.
 	 *
 	 * @param waitStrategy a {@link WaitStrategy} for blocking {@link #block} strategy
 	 * @param <T> type of the expected value
 	 *
-	 * @return A {@link MonoProcessor}.
+	 * @return A {@link MonoNextProcessor}.
 	 */
-	public static <T> MonoProcessor<T> create(WaitStrategy waitStrategy) {
-		return new MonoProcessor<>(null, waitStrategy);
+	public static <T> MonoNextProcessor<T> create(WaitStrategy waitStrategy) {
+		return new MonoNextProcessor<>(null, waitStrategy);
 	}
 
 	/**
-	 * Wrap a {@link Mono} into a {@link MonoProcessor} (turning it hot and allowing to block,
-	 * cancel, as well as many other operations). Note that the {@link MonoProcessor}
+	 * Wrap a {@link Mono} into a {@link MonoNextProcessor} (turning it hot and allowing to block,
+	 * cancel, as well as many other operations). Note that the {@link MonoNextProcessor}
 	 * is connected to the source.
 	 *
 	 * <p>
 	 * <img width="500" src="https://raw.githubusercontent.com/reactor/reactor-core/v3.1.3.RELEASE/src/docs/marble/unbounded1.png" alt="">
 	 * <p>
 	 *
-	 * @return a {@link MonoProcessor} to use to either retrieve value or cancel the underlying {@link Subscription}
+	 * @return a {@link MonoNextProcessor} to use to either retrieve value or cancel the underlying {@link Subscription}
 	 */
-	public static <T> MonoProcessor<T> of(Mono<T> source) {
-		MonoProcessor<T> result;
-		if (source instanceof MonoProcessor) {
-			result = (MonoProcessor<T>) source;
+	public static <T> MonoNextProcessor<T> of(Mono<T> source) {
+		MonoNextProcessor<T> result;
+		if (source instanceof MonoNextProcessor) {
+			result = (MonoNextProcessor<T>) source;
 		}
 		else {
-			result = new MonoProcessor<>(source);
+			result = new MonoNextProcessor<>(source);
 		}
 		result.connect();
 		return result;
@@ -107,8 +107,8 @@ public final class MonoProcessor<O> extends Mono<O>
 	volatile NextInner<O>[] subscribers;
 
 	@SuppressWarnings("rawtypes")
-	static final AtomicReferenceFieldUpdater<MonoProcessor, NextInner[]> SUBSCRIBERS =
-			AtomicReferenceFieldUpdater.newUpdater(MonoProcessor.class,
+	static final AtomicReferenceFieldUpdater<MonoNextProcessor, NextInner[]> SUBSCRIBERS =
+			AtomicReferenceFieldUpdater.newUpdater(MonoNextProcessor.class,
 					NextInner[].class,
 					"subscribers");
 
@@ -127,16 +127,16 @@ public final class MonoProcessor<O> extends Mono<O>
 	O            value;
 
 
-	volatile Subscription subscription;
-	static final AtomicReferenceFieldUpdater<MonoProcessor, Subscription> UPSTREAM =
-			AtomicReferenceFieldUpdater.newUpdater(MonoProcessor.class, Subscription
+	volatile Subscription                                                     subscription;
+	static final AtomicReferenceFieldUpdater<MonoNextProcessor, Subscription> UPSTREAM =
+			AtomicReferenceFieldUpdater.newUpdater(MonoNextProcessor.class, Subscription
 					.class, "subscription");
 
-	MonoProcessor(@Nullable Publisher<? extends O> source) {
+	MonoNextProcessor(@Nullable Publisher<? extends O> source) {
 		this(source, WaitStrategy.sleeping());
 	}
 
-	MonoProcessor(@Nullable Publisher<? extends O> source, WaitStrategy waitStrategy) {
+	MonoNextProcessor(@Nullable Publisher<? extends O> source, WaitStrategy waitStrategy) {
 		this.waitStrategy = Objects.requireNonNull(waitStrategy, "waitStrategy");
 		this.source = source;
 		SUBSCRIBERS.lazySet(this, source != null ? EMPTY_WITH_SOURCE : EMPTY);
@@ -189,7 +189,7 @@ public final class MonoProcessor<O> extends Mono<O>
 
 	/**
 	 * Block the calling thread indefinitely, waiting for the completion of this {@code MonoProcessor}. If the
-	 * {@link MonoProcessor} is completed with an error a RuntimeException that wraps the error is thrown.
+	 * {@link MonoNextProcessor} is completed with an error a RuntimeException that wraps the error is thrown.
 	 *
 	 * @return the value of this {@code MonoProcessor}
 	 */
@@ -201,7 +201,7 @@ public final class MonoProcessor<O> extends Mono<O>
 
 	/**
 	 * Block the calling thread for the specified time, waiting for the completion of this {@code MonoProcessor}. If the
-	 * {@link MonoProcessor} is completed with an error a RuntimeException that wraps the error is thrown.
+	 * {@link MonoNextProcessor} is completed with an error a RuntimeException that wraps the error is thrown.
 	 *
 	 * @param timeout the timeout value as a {@link Duration}
 	 *
@@ -429,12 +429,12 @@ public final class MonoProcessor<O> extends Mono<O>
 	}
 
 	/**
-	 * Returns the value that completed this {@link MonoProcessor}. Returns {@code null} if the {@link MonoProcessor} has not been completed. If the
-	 * {@link MonoProcessor} is completed with an error a RuntimeException that wraps the error is thrown.
+	 * Returns the value that completed this {@link MonoNextProcessor}. Returns {@code null} if the {@link MonoNextProcessor} has not been completed. If the
+	 * {@link MonoNextProcessor} is completed with an error a RuntimeException that wraps the error is thrown.
 	 *
-	 * @return the value that completed the {@link MonoProcessor}, or {@code null} if it has not been completed
+	 * @return the value that completed the {@link MonoNextProcessor}, or {@code null} if it has not been completed
 	 *
-	 * @throws RuntimeException if the {@link MonoProcessor} was completed with an error
+	 * @throws RuntimeException if the {@link MonoNextProcessor} was completed with an error
 	 */
 	@Nullable
 	public O peek() {
@@ -595,9 +595,9 @@ public final class MonoProcessor<O> extends Mono<O>
 	}
 
 	final static class NextInner<T> extends Operators.MonoSubscriber<T, T> {
-		final MonoProcessor<T> parent;
+		final MonoNextProcessor<T> parent;
 
-		NextInner(CoreSubscriber<? super T> actual, MonoProcessor<T> parent) {
+		NextInner(CoreSubscriber<? super T> actual, MonoNextProcessor<T> parent) {
 			super(actual);
 			this.parent = parent;
 		}
