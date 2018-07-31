@@ -36,7 +36,7 @@ import reactor.util.concurrent.WaitStrategy;
 import reactor.util.context.Context;
 
 /**
- * A {@code MonoProcessor} is a {@link Mono} extension that implements stateful semantics. Multi-subscribe is allowed.
+ * A {@link MonoNextProcessor} is a {@link Mono} extension that implements stateful semantics. Multi-subscribe is allowed.
  *
  * <p>
  * <img width="640" src="https://raw.githubusercontent.com/reactor/reactor-core/v3.1.3.RELEASE/src/docs/marble/monoprocessor.png" alt="">
@@ -49,7 +49,7 @@ import reactor.util.context.Context;
  * @author Stephane Maldini
  */
 public final class MonoNextProcessor<O> extends Mono<O>
-		implements Processor<O, O>, CoreSubscriber<O>, Disposable, Subscription,
+		implements MonoProcessor<O>, CoreSubscriber<O>, Disposable, Subscription,
 		           Scannable,
 		           LongSupplier {
 
@@ -140,6 +140,16 @@ public final class MonoNextProcessor<O> extends Mono<O>
 		this.waitStrategy = Objects.requireNonNull(waitStrategy, "waitStrategy");
 		this.source = source;
 		SUBSCRIBERS.lazySet(this, source != null ? EMPTY_WITH_SOURCE : EMPTY);
+	}
+
+	@Override
+	public Mono<O> asMono() {
+		return this;
+	}
+
+	@Override
+	public Flux<O> asFlux() {
+		return this.flux();
 	}
 
 	@Override
