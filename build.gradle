@@ -67,8 +67,7 @@ ext {
 
   javadocLinks = ["https://docs.oracle.com/javase/8/docs/api/",
 				  "https://docs.oracle.com/javaee/6/api/",
-				  "http://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/"] as
-		  String[]
+				  "http://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/"] as String[]
 
 
   bundleImportPackages = ['org.slf4j;resolution:=optional;version="[1.5.4,2)"',
@@ -299,7 +298,8 @@ project('reactor-core') {
 
 	//TODO after a release, bump the gradle.properties baseline
 	//TODO after a release, remove the reactor-core exclusions below if any
-//	classExcludes = []
+    classExcludes = ["reactor.core.publisher.MonoProcessor"]
+	methodExcludes = ["reactor.core.publisher.Mono#toProcessor()"]
   }
 
   javadoc {
