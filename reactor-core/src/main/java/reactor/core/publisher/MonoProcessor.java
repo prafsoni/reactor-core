@@ -78,4 +78,18 @@ public interface MonoProcessor<T> extends Processor<T, T> {
 		return result;
 	}
 
+	/**
+	 * Create a standalone {@link MonoSink} that is close to a {@link MonoProcessor}, in the
+	 * sense that is can be subscribed to (multiple subscribers are allowed). It also can
+	 * be decorated with the full {@link Mono} API, which it doesn't expose initially.
+	 * However, it cannot subscribe to a source as it is only a {@link Publisher} made for
+	 * manual pushing of signals.
+	 *
+	 * @param <T> the type of value emitted
+	 * @return a new {@link MonoSinkPublisher}
+	 */
+	static <T> MonoSinkPublisher<T> sink() {
+		return new MonoSinkPublisher<>();
+	}
+
 }
